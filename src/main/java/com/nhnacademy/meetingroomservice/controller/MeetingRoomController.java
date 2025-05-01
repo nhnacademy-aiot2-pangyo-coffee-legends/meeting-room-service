@@ -1,15 +1,15 @@
 package com.nhnacademy.meetingroomservice.controller;
 
-import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomRegisterRequest;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomUpdateRequest;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
-import jakarta.ws.rs.Path;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 회의실과 관련된 작업 API endpoints를 관리하는 컨트롤러
@@ -28,14 +28,10 @@ public class MeetingRoomController {
      */
     @PostMapping
     public ResponseEntity<MeetingRoomResponse> registerMeetingRoom(@RequestBody MeetingRoomRegisterRequest meetingRoomRegisterRequest) {
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(
+
+        MeetingRoomResponse meetingRoomResponse = meetingRoomService.registerMeetingRoom(
                 meetingRoomRegisterRequest.getMeetingRoomName(),
                 meetingRoomRegisterRequest.getMeetingRoomCapacity()
-        );
-
-        MeetingRoomResponse meetingRoomResponse = meetingRoomService.createMeetingRoom(
-                meetingRoom.getMeetingRoomName(),
-                meetingRoom.getMeetingRoomCapacity()
         );
 
         return ResponseEntity
@@ -54,6 +50,15 @@ public class MeetingRoomController {
 
         return ResponseEntity
                 .ok(meetingRoomResponse);
+    }
+
+
+    @GetMapping
+    public ResponseEntity<List<MeetingRoomResponse>> getMeetingRoomList() {
+        List<MeetingRoomResponse> meetingRoomResponseList = meetingRoomService.getMeetingRoomList();
+
+        return ResponseEntity
+                .ok(meetingRoomResponseList);
     }
 
     /**
