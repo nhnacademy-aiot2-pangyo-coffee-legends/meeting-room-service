@@ -26,4 +26,18 @@ public class MeetingRoom {
     @Column(name="meeting_room_capacity")
     @Comment("수용인원")
     int meetingRoomCapacity;
+
+    private MeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
+        this.meetingRoomName = meetingRoomName;
+        this.meetingRoomCapacity = meetingRoomCapacity;
+    }
+
+    public static MeetingRoom ofNewMeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
+        return new MeetingRoom(meetingRoomName, meetingRoomCapacity);
+    }
+
+    public void update(String meetingRoomName, int meetingRoomCapacity) {
+        this.meetingRoomName = meetingRoomName;
+        this.meetingRoomCapacity = meetingRoomCapacity;
+    }
 }

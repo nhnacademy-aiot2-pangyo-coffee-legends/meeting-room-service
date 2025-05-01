@@ -8,6 +8,7 @@ class MeetingRoomServiceApplicationTests {
 
     @Test
     void contextLoads() {
+
     }
 
 }
