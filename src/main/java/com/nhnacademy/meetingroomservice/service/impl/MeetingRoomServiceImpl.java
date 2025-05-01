@@ -2,13 +2,16 @@ package com.nhnacademy.meetingroomservice.service.impl;
 
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
+import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
 import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * {@link MeetingRoomService} 인터페이스를 구현한 클래스입니다.
@@ -48,9 +51,13 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 생성된 회의실 Entity를 DTO로 변환하여 반환
      */
     @Override
-    public MeetingRoomResponse createMeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
+    public MeetingRoomResponse registerMeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
 
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+
+        if (meetingRoomRepository.existsMeetingRoomByMeetingRoomName(meetingRoomName)) {
+            throw new MeetingRoomAlreadyExistsException(meetingRoomName);
+        }
 
         MeetingRoom savedMeetingRoom = meetingRoomRepository.save(meetingRoom);
 
@@ -63,11 +70,30 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 데이터베이스에 존재하는 회의실의 정보를 DTO로 변환하여 반환
      */
     @Override
+    @Transactional(readOnly = true)
     public MeetingRoomResponse getMeetingRoom(Long no) {
 
         MeetingRoom meetingRoom = meetingRoomRepository.findById(no).orElseThrow(() -> new MeetingRoomNotFoundException(no));
 
         return convertToMeetingRoomResponse(meetingRoom);
+    }
+
+    /**
+     *
+     * @return 테이터베이스에 존재하는 모든 회의실의 정보를 DTO로 변환하여 List로 반환
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<MeetingRoomResponse> getMeetingRoomList() {
+
+        List<MeetingRoom> meetingRoomList = meetingRoomRepository.findAll();
+
+        return meetingRoomList.stream().map(
+                meetingRoom -> {
+                    return convertToMeetingRoomResponse(meetingRoom);
+                }
+        ).toList();
+
     }
 
     /**
@@ -78,10 +104,6 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      */
     @Override
     public MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity) {
-
-        if (!meetingRoomRepository.existsById(no)) {
-            throw new MeetingRoomDoesNotExistException(no);
-        }
 
         MeetingRoom meetingRoom = meetingRoomRepository.findById(no).orElseThrow(() -> new MeetingRoomDoesNotExistException(no));
 
@@ -97,11 +119,9 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     @Override
     public void deleteMeetingRoom(Long no) {
 
-        if (!meetingRoomRepository.existsById(no)) {
-            throw new MeetingRoomDoesNotExistException(no);
-        }
+        MeetingRoom meetingRoom = meetingRoomRepository.findById(no).orElseThrow(() -> new MeetingRoomDoesNotExistException(no));
 
-        meetingRoomRepository.deleteById(no);
+        meetingRoomRepository.delete(meetingRoom);
     }
 
     /**
