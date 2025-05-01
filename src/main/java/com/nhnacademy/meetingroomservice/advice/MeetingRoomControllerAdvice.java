@@ -56,8 +56,8 @@ public class MeetingRoomControllerAdvice {
                 .body(errorResponse);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception e, HttpServletRequest request) {
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Throwable e, HttpServletRequest request) {
 
         ErrorResponse errorResponse = new ErrorResponse(
                 e.getMessage(),
