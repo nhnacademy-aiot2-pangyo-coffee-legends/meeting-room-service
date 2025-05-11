@@ -1,7 +1,9 @@
 package com.nhnacademy.meetingroomservice.service;
 
+import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface MeetingRoomService {
@@ -15,4 +17,6 @@ public interface MeetingRoomService {
     MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity);
 
     void deleteMeetingRoom(Long no);
+
+    EntryResponse enterMeetingRoom(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo);
 }

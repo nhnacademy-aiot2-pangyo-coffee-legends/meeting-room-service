@@ -1,7 +1,11 @@
 package com.nhnacademy.meetingroomservice.service.impl;
 
+import com.nhnacademy.meetingroomservice.adaptor.BookingAdaptor;
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
+import com.nhnacademy.meetingroomservice.dto.EntryRequest;
+import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
+import com.nhnacademy.meetingroomservice.exception.BookingNotFoundException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
@@ -13,15 +17,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Transactional
@@ -29,6 +35,9 @@ class MeetingRoomServiceImplTest {
 
     @Mock
     MeetingRoomRepository meetingRoomRepository;
+
+    @Mock
+    BookingAdaptor bookingAdaptor;
 
     @InjectMocks // Mock 객체 생성 후 자동 주입 (bean injection)
     MeetingRoomServiceImpl meetingRoomService;
@@ -199,7 +208,7 @@ class MeetingRoomServiceImplTest {
 
         meetingRoomService.deleteMeetingRoom(1L);
 
-        verify(meetingRoomRepository, Mockito.times(1)).delete(meetingRoom);
+        verify(meetingRoomRepository, times(1)).delete(meetingRoom);
 
     }
 
@@ -214,5 +223,52 @@ class MeetingRoomServiceImplTest {
         assertThrows(MeetingRoomDoesNotExistException.class, () -> {
             meetingRoomService.deleteMeetingRoom(nonExistentId);
         });
+    }
+
+    @Test
+    @DisplayName("회의실 입실 성공")
+    void enterMeetingRoom() {
+        String code = "ABC34F21";
+        LocalDateTime entryTime = LocalDateTime.now();
+        Long meetingRoomNo = 1L;
+
+        EntryResponse entryResponse = new EntryResponse(
+                code,
+                entryTime,
+                meetingRoomNo
+        );
+
+        ResponseEntity<EntryResponse> mockResponse = ResponseEntity.ok(entryResponse);
+
+        when(bookingAdaptor.checkBooking(eq(1L), any(EntryRequest.class))).thenReturn(mockResponse);
+
+        EntryResponse actualResponse = meetingRoomService.enterMeetingRoom(1L, code, entryTime, meetingRoomNo);
+
+        assertNotNull(actualResponse);
+        assertEquals(code, actualResponse.getCode());
+        assertEquals(entryTime, actualResponse.getEntryTime());
+        assertEquals(meetingRoomNo, actualResponse.getMeetingRoomNo());
+
+    }
+
+    @Test
+    @DisplayName("회의실 입실 실패")
+    void enterMeetingRoomFailed() {
+        String code = "ABC34F21";
+        LocalDateTime entryTime = LocalDateTime.now();
+        Long meetingRoomNo = 1L;
+
+        EntryResponse entryResponse = new EntryResponse(
+                code,
+                entryTime,
+                meetingRoomNo
+        );
+
+        ResponseEntity<EntryResponse> mockResponse = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(entryResponse);
+
+        when(bookingAdaptor.checkBooking(Mockito.eq(1L), Mockito.any(EntryRequest.class))).thenReturn(mockResponse);
+
+        assertThrows(BookingNotFoundException.class, () -> meetingRoomService.enterMeetingRoom(1L, code, entryTime, meetingRoomNo));
+
     }
 }
