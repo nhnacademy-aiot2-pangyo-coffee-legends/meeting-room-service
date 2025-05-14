@@ -2,6 +2,7 @@ package com.nhnacademy.meetingroomservice.advice;
 
 import com.nhnacademy.meetingroomservice.controller.MeetingRoomController;
 import com.nhnacademy.meetingroomservice.error.ErrorResponse;
+import com.nhnacademy.meetingroomservice.exception.BookingNotFoundException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
@@ -47,6 +48,19 @@ public class MeetingRoomControllerAdvice {
 
         ErrorResponse errorResponse = new ErrorResponse(
                 meetingRoomDoesNotExistException.getMessage(),
+                HttpStatus.NOT_FOUND.value(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(BookingNotFoundException.class)
+    public ResponseEntity<ErrorResponse> bookingNotFoundException(BookingNotFoundException bookingNotFoundException, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                bookingNotFoundException.getMessage(),
                 HttpStatus.NOT_FOUND.value(),
                 request.getRequestURI()
         );

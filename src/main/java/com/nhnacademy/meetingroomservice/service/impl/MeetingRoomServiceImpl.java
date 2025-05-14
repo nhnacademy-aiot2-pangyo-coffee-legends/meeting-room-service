@@ -1,16 +1,22 @@
 package com.nhnacademy.meetingroomservice.service.impl;
 
+import com.nhnacademy.meetingroomservice.adaptor.BookingAdaptor;
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
+import com.nhnacademy.meetingroomservice.dto.EntryRequest;
+import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
+import com.nhnacademy.meetingroomservice.exception.BookingNotFoundException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
 import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -40,9 +46,11 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
+
 public class MeetingRoomServiceImpl implements MeetingRoomService {
 
     private final MeetingRoomRepository meetingRoomRepository;
+    private final BookingAdaptor bookingAdaptor;
 
     /**
      *
@@ -122,6 +130,23 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         MeetingRoom meetingRoom = meetingRoomRepository.findById(no).orElseThrow(() -> new MeetingRoomDoesNotExistException(no));
 
         meetingRoomRepository.delete(meetingRoom);
+    }
+
+    @Override
+    public EntryResponse enterMeetingRoom(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo) {
+        EntryRequest entryRequest = new EntryRequest(
+                code,
+                entryTime,
+                meetingRoomNo
+        );
+
+        ResponseEntity<EntryResponse> entryResponseEntity = bookingAdaptor.checkBooking(no, entryRequest);
+
+        if (entryResponseEntity.getStatusCode().is4xxClientError()) {
+            throw new BookingNotFoundException();
+        }
+
+        return entryResponseEntity.getBody();
     }
 
     /**

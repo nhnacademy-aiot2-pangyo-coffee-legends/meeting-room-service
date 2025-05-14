@@ -1,8 +1,6 @@
 package com.nhnacademy.meetingroomservice.controller;
 
-import com.nhnacademy.meetingroomservice.dto.MeetingRoomRegisterRequest;
-import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
-import com.nhnacademy.meetingroomservice.dto.MeetingRoomUpdateRequest;
+import com.nhnacademy.meetingroomservice.dto.*;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,7 +13,7 @@ import java.util.List;
  * 회의실과 관련된 작업 API endpoints를 관리하는 컨트롤러
  */
 @RestController
-@RequestMapping("/api/v1/meeting-rooms")
+@RequestMapping("/api/v1/meeting-rooms") // prefix: /api/v1, RouteLocator Bean을 직접설정해서 Spring Cloud Gateway에서 url prefix 경로를 지정해주는 방법도 생각해볼 것.
 @RequiredArgsConstructor
 public class MeetingRoomController {
 
@@ -53,6 +51,10 @@ public class MeetingRoomController {
     }
 
 
+    /**
+     *
+     * @return 회의실 DTO 리스트 반환
+     */
     @GetMapping
     public ResponseEntity<List<MeetingRoomResponse>> getMeetingRoomList() {
         List<MeetingRoomResponse> meetingRoomResponseList = meetingRoomService.getMeetingRoomList();
@@ -92,5 +94,19 @@ public class MeetingRoomController {
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    /**
+     *
+     * @param no 예약번호
+     * @param entryRequest 회의실 입실 request DTO
+     * @return 회의실 입실 검증 성공 시 EntryResponse DTO 반환
+     */
+    @PostMapping("/{meeting-room-id}/verify")
+    public ResponseEntity<EntryResponse> enterMeetingRoom(@PathVariable("meeting-room-id") Long no, @RequestBody EntryRequest entryRequest) {
+        EntryResponse entryResponse = meetingRoomService.enterMeetingRoom(no, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getMeetingRoomNo());
+
+        return ResponseEntity
+                .ok(entryResponse);
     }
 }
