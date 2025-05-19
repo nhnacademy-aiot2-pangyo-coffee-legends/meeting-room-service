@@ -55,7 +55,7 @@ public class MeetingRoomController {
      *
      * @return 회의실 DTO 리스트 반환
      */
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<List<MeetingRoomResponse>> getMeetingRoomList() {
         List<MeetingRoomResponse> meetingRoomResponseList = meetingRoomService.getMeetingRoomList();
 
@@ -98,13 +98,12 @@ public class MeetingRoomController {
 
     /**
      *
-     * @param no 예약번호
      * @param entryRequest 회의실 입실 request DTO
      * @return 회의실 입실 검증 성공 시 EntryResponse DTO 반환
      */
-    @PostMapping("/{meeting-room-id}/verify")
-    public ResponseEntity<EntryResponse> enterMeetingRoom(@PathVariable("meeting-room-id") Long no, @RequestBody EntryRequest entryRequest) {
-        EntryResponse entryResponse = meetingRoomService.enterMeetingRoom(no, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getMeetingRoomNo());
+    @PostMapping("/verify")
+    public ResponseEntity<EntryResponse> enterMeetingRoom(@RequestHeader("X-USER") String email, @RequestBody EntryRequest entryRequest) {
+        EntryResponse entryResponse = meetingRoomService.enterMeetingRoom(email, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getBookingNo());
 
         return ResponseEntity
                 .ok(entryResponse);

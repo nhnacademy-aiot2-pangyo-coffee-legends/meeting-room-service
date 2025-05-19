@@ -18,5 +18,5 @@ public interface MeetingRoomService {
 
     void deleteMeetingRoom(Long no);
 
-    EntryResponse enterMeetingRoom(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo);
+    EntryResponse enterMeetingRoom(String email, String code, LocalDateTime entryTime, Long bookingNo);
 }

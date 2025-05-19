@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name="member-serivce", url="http://localhost:10255", path="/api/v1/members")
 public interface MemberAdaptor {
 
-    @GetMapping("/info/{email}")
+    @GetMapping("/email/{email}/info")
     ResponseEntity<MemberResponse> getMember(@PathVariable String email);
 
-    @GetMapping("/{no}/name")
+    @GetMapping("/{no}/info")
     ResponseEntity<MemberResponse> getMemberName(@PathVariable("no") Long no);
 }

@@ -230,24 +230,24 @@ class MeetingRoomServiceImplTest {
     void enterMeetingRoom() {
         String code = "ABC34F21";
         LocalDateTime entryTime = LocalDateTime.now();
-        Long meetingRoomNo = 1L;
+        Long bookingNo = 1L;
 
         EntryResponse entryResponse = new EntryResponse(
                 code,
                 entryTime,
-                meetingRoomNo
+                bookingNo
         );
 
         ResponseEntity<EntryResponse> mockResponse = ResponseEntity.ok(entryResponse);
 
-        when(bookingAdaptor.checkBooking(eq(1L), any(EntryRequest.class))).thenReturn(mockResponse);
+        when(bookingAdaptor.checkBooking(Mockito.anyString(), any(EntryRequest.class))).thenReturn(mockResponse);
 
-        EntryResponse actualResponse = meetingRoomService.enterMeetingRoom(1L, code, entryTime, meetingRoomNo);
+        EntryResponse actualResponse = meetingRoomService.enterMeetingRoom("test@test.com", code, entryTime, bookingNo);
 
         assertNotNull(actualResponse);
         assertEquals(code, actualResponse.getCode());
         assertEquals(entryTime, actualResponse.getEntryTime());
-        assertEquals(meetingRoomNo, actualResponse.getMeetingRoomNo());
+        assertEquals(bookingNo, actualResponse.getBookingNo());
 
     }
 
@@ -266,9 +266,9 @@ class MeetingRoomServiceImplTest {
 
         ResponseEntity<EntryResponse> mockResponse = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(entryResponse);
 
-        when(bookingAdaptor.checkBooking(Mockito.eq(1L), Mockito.any(EntryRequest.class))).thenReturn(mockResponse);
+        when(bookingAdaptor.checkBooking(Mockito.anyString(), Mockito.any(EntryRequest.class))).thenReturn(mockResponse);
 
-        assertThrows(BookingNotFoundException.class, () -> meetingRoomService.enterMeetingRoom(1L, code, entryTime, meetingRoomNo));
+        assertThrows(BookingNotFoundException.class, () -> meetingRoomService.enterMeetingRoom("test@test.com", code, entryTime, meetingRoomNo));
 
     }
 }

@@ -1,0 +1,95 @@
+### 회의실 등록
+POST http://localhost:10258/api/v1/meeting-rooms
+Content-type: application/json
+Accept: application/json
+
+{
+  "meetingRoomCapacity": 9,
+  "meetingRoomName": "회의실 test"
+}
+
+### 회의실 조회 (id: 1)
+GET http://localhost:10258/api/v1/meeting-rooms/1
+Accept: application/json
+
+### 회의실 목록 조회
+GET http://localhost:10258/api/v1/meeting-rooms
+Accept: application/json
+
+### 회의실 정보 변경 (id: 1)
+PUT http://localhost:10258/api/v1/meeting-rooms/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "meetingRoomName": "회의실 A-1",
+  "meetingRoomCapacity": 20
+}
+
+### 회의실 삭제 (id: 2)
+DELETE  http://localhost:10258/api/v1/meeting-rooms/2
+Accept: application/json
+
+### 회의실 입실 코드 입력 (id: 1)
+### member-service, booking-service, meeting-room-service 모두 실행 중이어야 함.
+### member-service: testInitializer를 통해서 test 계정 등록되어 있어야 테스트 가능.
+### booking-service: test 예약 날짜, 시간대에 맞추어 테스트
+### meeting-room-service: booking-service test 예약으로 등록되어 있는 회의실 번호로 테스트
+POST http://localhost:10258/api/v1/meeting-rooms/1/verify
+Content-Type: application/json
+Accept: application/json
+X-USER: test@test.com
+
+{
+  "code": "test1",
+  "entryTime": "2025-04-29 09:30",
+  "meetingRoomNo": 1
+}
+
+### 회의실 입실: 예약 시간보다 10분 이상 빠른 경우
+POST http://localhost:10258/api/v1/meeting-rooms/1/verify
+Content-Type: application/json
+Accept: application/json
+X-USER: test@test.com
+
+{
+  "code": "test1",
+  "entryTime": "2025-04-29 09:15",
+  "meetingRoomNo": 1
+}
+
+### 회의실 입실: 예약 시간보다 10분 이상 늦는 경우
+POST http://localhost:10258/api/v1/meeting-rooms/1/verify
+Content-Type: application/json
+Accept: application/json
+X-USER: test@test.com
+
+{
+  "code": "test1",
+  "entryTime": "2025-04-29 09:41",
+  "meetingRoomNo": 1
+}
+
+### 회의실 입실: 예약 날짜가 다른 경우
+POST http://localhost:10258/api/v1/meeting-rooms/1/verify
+Content-Type: application/json
+Accept: application/json
+X-USER: test@test.com
+
+{
+  "code": "test1",
+  "entryTime": "2025-04-30 09:30",
+  "meetingRoomNo": 1
+}
+
+### 회의실 입실: 예약 코드 불일치
+POST http://localhost:10258/api/v1/meeting-rooms/1/verify
+Content-Type: application/json
+Accept: application/json
+X-USER: test@test.com
+
+{
+  "code": "test13",
+  "entryTime": "2025-04-29 09:30",
+  "meetingRoomNo": 1
+}
