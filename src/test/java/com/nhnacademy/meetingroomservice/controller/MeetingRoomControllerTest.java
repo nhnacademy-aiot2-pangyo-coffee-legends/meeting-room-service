@@ -21,6 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.mockito.Mockito.doThrow;
@@ -82,14 +83,14 @@ class MeetingRoomControllerTest {
                 .thenThrow(new MeetingRoomAlreadyExistsException(meetingRoomName));
 
         mockMvc.perform(post("/api/v1/meeting-rooms")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                        """
-                            {
-                            "meetingRoomName": "회의실 test",
-                            "meetingRoomCapacity": 10
-                            }
-                        """)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                                """
+                                            {
+                                            "meetingRoomName": "회의실 test",
+                                            "meetingRoomCapacity": 10
+                                            }
+                                        """)
                 )
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(String.format("%s은(는) 이미 존재하는 회의실입니다.", meetingRoomName)))
@@ -168,11 +169,11 @@ class MeetingRoomControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                                 """
-                                     {
-                                     "meetingRoomName": "회의실 updated",
-                                     "meetingRoomCapacity": 15
-                                     }
-                                """)
+                                             {
+                                             "meetingRoomName": "회의실 updated",
+                                             "meetingRoomCapacity": 15
+                                             }
+                                        """)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meetingRoomName").value("회의실 updated"))
@@ -191,15 +192,15 @@ class MeetingRoomControllerTest {
                 .thenThrow(new MeetingRoomDoesNotExistException(nonExistentId));
 
         mockMvc.perform(put("/api/v1/meeting-rooms/{meeting-room-id}", nonExistentId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                        """
-                            {
-                            "meetingRoomName": "회의실 updated",
-                            "meetingRoomCapacity": 15
-                            }
-                        """
-                ))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                                """
+                                            {
+                                            "meetingRoomName": "회의실 updated",
+                                            "meetingRoomCapacity": 15
+                                            }
+                                        """
+                        ))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(String.format("회의실 %d은(는) 등록되지 않은 회의실입니다.", nonExistentId)))
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
@@ -238,7 +239,6 @@ class MeetingRoomControllerTest {
     @Test
     @DisplayName("회의실 입실")
     void enterMeetingRoom() throws Exception {
-        Long no = 1L;
         String code = "ABC34F21";
         LocalDateTime entryTime = LocalDateTime.now();
         Long meetingRoomNo = 1L;
@@ -249,7 +249,7 @@ class MeetingRoomControllerTest {
                 meetingRoomNo
         );
 
-        when(meetingRoomService.enterMeetingRoom(Mockito.anyLong(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(entryResponse);
+        when(meetingRoomService.enterMeetingRoom(Mockito.anyString(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(entryResponse);
 
         EntryRequest entryRequest = new EntryRequest(
                 code,
@@ -259,13 +259,14 @@ class MeetingRoomControllerTest {
 
         String json = objectMapper.writeValueAsString(entryRequest);
 
-        mockMvc.perform(post("/api/v1/meeting-rooms/{meeting-room-id}/verify", no)
+        mockMvc.perform(post("/api/v1/meeting-rooms/verify")
+                        .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(entryResponse.getCode()))
-                .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().toString()))
-                .andExpect(jsonPath("$.meetingRoomNo").value(entryResponse.getMeetingRoomNo()))
+                .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))))
+                .andExpect(jsonPath("$.bookingNo").value(entryResponse.getBookingNo()))
                 .andDo(print());
     }
 
@@ -286,15 +287,16 @@ class MeetingRoomControllerTest {
         String json = objectMapper.writeValueAsString(entryRequest);
 
         doThrow(new BookingNotFoundException())
-                .when(meetingRoomService).enterMeetingRoom(Mockito.anyLong(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+                .when(meetingRoomService).enterMeetingRoom(Mockito.anyString(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
 
-        mockMvc.perform(post("/api/v1/meeting-rooms/{meeting-room-id}/verify", no)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+        mockMvc.perform(post("/api/v1/meeting-rooms/verify")
+                        .header("X-USER", "test@test.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("등록되지 않은 예약정보입니다."))
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.uri").value(String.format("/api/v1/meeting-rooms/%d/verify", no)))
+                .andExpect(jsonPath("$.uri").value("/api/v1/meeting-rooms/verify"))
                 .andDo(print());
     }
 }

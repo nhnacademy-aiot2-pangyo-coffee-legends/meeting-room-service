@@ -1,5 +1,6 @@
 package com.nhnacademy.meetingroomservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,8 +12,9 @@ public class EntryResponse {
 
     private String code;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime entryTime;
 
-    private Long meetingRoomNo;
+    private Long bookingNo;
 
 }

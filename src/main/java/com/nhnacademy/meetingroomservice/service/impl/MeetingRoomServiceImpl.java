@@ -133,14 +133,16 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     }
 
     @Override
-    public EntryResponse enterMeetingRoom(Long no, String code, LocalDateTime entryTime, Long meetingRoomNo) {
+    public EntryResponse enterMeetingRoom(String email, String code, LocalDateTime entryTime, Long bookingNo) {
         EntryRequest entryRequest = new EntryRequest(
                 code,
                 entryTime,
-                meetingRoomNo
+                bookingNo
         );
 
-        ResponseEntity<EntryResponse> entryResponseEntity = bookingAdaptor.checkBooking(no, entryRequest);
+        System.out.println("entryRequest: " + entryRequest);
+
+        ResponseEntity<EntryResponse> entryResponseEntity = bookingAdaptor.checkBooking(email, entryRequest);
 
         if (entryResponseEntity.getStatusCode().is4xxClientError()) {
             throw new BookingNotFoundException();

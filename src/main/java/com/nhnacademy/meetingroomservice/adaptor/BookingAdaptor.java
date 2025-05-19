@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name="booking-service", url="http://localhost:10257", path="/api/v1/bookings")
 public interface BookingAdaptor {
 
-    @PostMapping("/{no}/enter")
-    ResponseEntity<EntryResponse> checkBooking(@PathVariable("no") Long no, @RequestBody EntryRequest entryRequest);
+    @PostMapping("/verify")
+    ResponseEntity<EntryResponse> checkBooking(@RequestHeader("X-USER") String email, @RequestBody EntryRequest entryRequest);
 }
