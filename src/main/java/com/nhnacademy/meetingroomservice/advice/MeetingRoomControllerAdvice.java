@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.meetingroomservice.controller.MeetingRoomController;
-import com.nhnacademy.meetingroomservice.error.ErrorResponse;
+import com.nhnacademy.meetingroomservice.error.CommonErrorResponse;
 import com.nhnacademy.meetingroomservice.exception.BookingNotFoundException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class MeetingRoomControllerAdvice {
 
     @ExceptionHandler(MeetingRoomAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> meetingRoomAlreadyExistsExceptionHandler(MeetingRoomAlreadyExistsException meetingRoomAlreadyExistsException, HttpServletRequest request) {
+    public ResponseEntity<CommonErrorResponse> meetingRoomAlreadyExistsExceptionHandler(MeetingRoomAlreadyExistsException meetingRoomAlreadyExistsException, HttpServletRequest request) {
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
                 meetingRoomAlreadyExistsException.getMessage(),
                 HttpStatus.CONFLICT.value(),
                 request.getRequestURI()
@@ -30,13 +30,13 @@ public class MeetingRoomControllerAdvice {
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(errorResponse);
+                .body(commonErrorResponse);
     }
 
     @ExceptionHandler(MeetingRoomNotFoundException.class)
-    public ResponseEntity<ErrorResponse> meetingRoomNotFoundExceptionHandler(MeetingRoomNotFoundException meetingRoomNotFoundException, HttpServletRequest request) {
+    public ResponseEntity<CommonErrorResponse> meetingRoomNotFoundExceptionHandler(MeetingRoomNotFoundException meetingRoomNotFoundException, HttpServletRequest request) {
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
                 meetingRoomNotFoundException.getMessage(),
                 HttpStatus.NOT_FOUND.value(),
                 request.getRequestURI()
@@ -44,13 +44,13 @@ public class MeetingRoomControllerAdvice {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(errorResponse);
+                .body(commonErrorResponse);
     }
 
     @ExceptionHandler(MeetingRoomDoesNotExistException.class)
-    public ResponseEntity<ErrorResponse> meetingRoomDoesNotExistExceptionHandler(MeetingRoomDoesNotExistException meetingRoomDoesNotExistException, HttpServletRequest request) {
+    public ResponseEntity<CommonErrorResponse> meetingRoomDoesNotExistExceptionHandler(MeetingRoomDoesNotExistException meetingRoomDoesNotExistException, HttpServletRequest request) {
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
                 meetingRoomDoesNotExistException.getMessage(),
                 HttpStatus.NOT_FOUND.value(),
                 request.getRequestURI()
@@ -58,12 +58,12 @@ public class MeetingRoomControllerAdvice {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(errorResponse);
+                .body(commonErrorResponse);
     }
 
     @ExceptionHandler(BookingNotFoundException.class)
-    public ResponseEntity<ErrorResponse> bookingNotFoundException(BookingNotFoundException bookingNotFoundException, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+    public ResponseEntity<CommonErrorResponse> bookingNotFoundException(BookingNotFoundException bookingNotFoundException, HttpServletRequest request) {
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
                 bookingNotFoundException.getMessage(),
                 HttpStatus.NOT_FOUND.value(),
                 request.getRequestURI()
@@ -71,13 +71,13 @@ public class MeetingRoomControllerAdvice {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(errorResponse);
+                .body(commonErrorResponse);
     }
 
     @ExceptionHandler(Throwable.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Throwable e, HttpServletRequest request) {
+    public ResponseEntity<CommonErrorResponse> handleGenericException(Throwable e, HttpServletRequest request) {
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
                 e.getMessage(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 request.getRequestURI()
@@ -85,11 +85,11 @@ public class MeetingRoomControllerAdvice {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorResponse);
+                .body(commonErrorResponse);
     }
 
     @ExceptionHandler(FeignException.class)
-    public ResponseEntity<ErrorResponse> handlerFeignException(FeignException e, HttpServletRequest request) throws JsonProcessingException {
+    public ResponseEntity<CommonErrorResponse> handlerFeignException(FeignException e, HttpServletRequest request) throws JsonProcessingException {
         HttpStatus status = HttpStatus.resolve(e.status());
 
         if (status == null) {
@@ -98,13 +98,13 @@ public class MeetingRoomControllerAdvice {
 
         String message = jsonParser(e.contentUTF8());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                "예약 서비스 응답 오류: " + message,
+        CommonErrorResponse commonErrorResponse = new CommonErrorResponse(
+                message,
                 status.value(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(status).body(errorResponse);
+        return ResponseEntity.status(status).body(commonErrorResponse);
     }
 
     private String jsonParser(String feignMessage) throws JsonProcessingException {

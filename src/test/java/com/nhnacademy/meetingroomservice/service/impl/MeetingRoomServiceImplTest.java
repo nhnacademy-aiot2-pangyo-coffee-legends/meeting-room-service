@@ -10,6 +10,7 @@ import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsExcep
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
 import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -233,19 +234,20 @@ class MeetingRoomServiceImplTest {
         Long bookingNo = 1L;
 
         EntryResponse entryResponse = new EntryResponse(
-                code,
+                HttpStatus.OK.value(),
+                "입실이 완료되었습니다.",
                 entryTime,
                 bookingNo
         );
 
         ResponseEntity<EntryResponse> mockResponse = ResponseEntity.ok(entryResponse);
 
-        when(bookingAdaptor.checkBooking(Mockito.anyString(), any(EntryRequest.class))).thenReturn(mockResponse);
+        when(bookingAdaptor.checkBooking(any(EntryRequest.class))).thenReturn(mockResponse);
 
-        EntryResponse actualResponse = meetingRoomService.enterMeetingRoom("test@test.com", code, entryTime, bookingNo);
+        EntryResponse actualResponse = meetingRoomService.enterMeetingRoom(code, entryTime, bookingNo);
 
         assertNotNull(actualResponse);
-        assertEquals(code, actualResponse.getCode());
+        assertEquals(HttpStatus.OK.value(), actualResponse.getStatusCode());
         assertEquals(entryTime, actualResponse.getEntryTime());
         assertEquals(bookingNo, actualResponse.getBookingNo());
 
@@ -256,19 +258,12 @@ class MeetingRoomServiceImplTest {
     void enterMeetingRoomFailed() {
         String code = "ABC34F21";
         LocalDateTime entryTime = LocalDateTime.now();
-        Long meetingRoomNo = 1L;
+        Long bookingNo = 1L;
 
-        EntryResponse entryResponse = new EntryResponse(
-                code,
-                entryTime,
-                meetingRoomNo
-        );
+        when(bookingAdaptor.checkBooking(Mockito.any())).thenThrow(mock(FeignException.class));
 
-        ResponseEntity<EntryResponse> mockResponse = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(entryResponse);
-
-        when(bookingAdaptor.checkBooking(Mockito.anyString(), Mockito.any(EntryRequest.class))).thenReturn(mockResponse);
-
-        assertThrows(BookingNotFoundException.class, () -> meetingRoomService.enterMeetingRoom("test@test.com", code, entryTime, meetingRoomNo));
-
+        assertThrows(FeignException.class, () -> {
+            meetingRoomService.enterMeetingRoom(code, entryTime, bookingNo);
+        });
     }
 }

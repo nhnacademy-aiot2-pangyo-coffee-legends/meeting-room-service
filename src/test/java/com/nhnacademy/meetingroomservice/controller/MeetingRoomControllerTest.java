@@ -10,6 +10,9 @@ import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsExcep
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -20,12 +23,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -244,12 +249,13 @@ class MeetingRoomControllerTest {
         Long meetingRoomNo = 1L;
 
         EntryResponse entryResponse = new EntryResponse(
-                code,
+                HttpStatus.OK.value(),
+                "입실이 완료되었습니다.",
                 entryTime,
                 meetingRoomNo
         );
 
-        when(meetingRoomService.enterMeetingRoom(Mockito.anyString(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(entryResponse);
+        when(meetingRoomService.enterMeetingRoom(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenReturn(entryResponse);
 
         EntryRequest entryRequest = new EntryRequest(
                 code,
@@ -264,38 +270,119 @@ class MeetingRoomControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(entryResponse.getCode()))
+                .andExpect(jsonPath("$.statusCode").value(entryResponse.getStatusCode()))
                 .andExpect(jsonPath("$.entryTime").value(entryResponse.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))))
                 .andExpect(jsonPath("$.bookingNo").value(entryResponse.getBookingNo()))
                 .andDo(print());
     }
 
     @Test
-    @DisplayName("회의실 입실 실패")
+    @DisplayName("회의실 입실 실패: 입실 정보 찾을 수 없음 404")
     void enterMeetingRoomFailed() throws Exception {
-        Long no = 1L;
         String code = "ABC34F21";
         LocalDateTime entryTime = LocalDateTime.now();
-        Long meetingRoomNo = 1L;
+        Long bookingNo = 1L;
 
         EntryRequest entryRequest = new EntryRequest(
                 code,
                 entryTime,
-                meetingRoomNo
+                bookingNo
         );
 
-        String json = objectMapper.writeValueAsString(entryRequest);
+        Request request = Request.create(Request.HttpMethod.GET, "/api/v1/meeting-rooms/verify", Map.of(), null, Charset.defaultCharset(), null);
+        FeignException exception = FeignException.errorStatus("verify", Response.builder()
+                .status(404)
+                .reason("Not Found")
+                .request(request)
+                .headers(Map.of("Content-Type", List.of("application/json")))
+                .body("{\"message\": \"예약정보가 일치하지 않습니다.\",\"statusCode:\":404,\"uri\":\"/api/v1/meeting-rooms/verify\"}", StandardCharsets.UTF_8)
+                .build());
 
-        doThrow(new BookingNotFoundException())
-                .when(meetingRoomService).enterMeetingRoom(Mockito.anyString(), Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong());
+        when(meetingRoomService.enterMeetingRoom(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenThrow(exception);
+
+        String json = objectMapper.writeValueAsString(entryRequest);
 
         mockMvc.perform(post("/api/v1/meeting-rooms/verify")
                         .header("X-USER", "test@test.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("등록되지 않은 예약정보입니다."))
-                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.statusCode").value(404))
+                .andExpect(jsonPath("$.uri").value("/api/v1/meeting-rooms/verify"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("입실이 예약시간보다 10분 이상 빠른 경우 - 입실 불가 400")
+    void enterMeetingRoomEarlyEntry() throws Exception {
+        String code = "ABC34F21";
+        LocalDateTime entryTime = LocalDateTime.now();
+        Long bookingNo = 1L;
+
+        EntryRequest entryRequest = new EntryRequest(
+                code,
+                entryTime,
+                bookingNo
+        );
+
+        Request request = Request.create(Request.HttpMethod.GET, "/api/v1/meeting-rooms/verify", Map.of(), null, Charset.defaultCharset(), null);
+        FeignException exception = FeignException.errorStatus("verify", Response.builder()
+                .status(400)
+                .reason("Bad Request")
+                .request(request)
+                .headers(Map.of("Content-Type", List.of("application/json")))
+                .body("{\"message\":\"예약 시간 10분 전부터 입장 가능합니다.\",\"statusCode\":400,\"uri\":\"/api/v1/meeting-rooms/verify\"}", StandardCharsets.UTF_8)
+                .build());
+
+        when(meetingRoomService.enterMeetingRoom(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenThrow(exception);
+
+        String json = objectMapper.writeValueAsString(entryRequest);
+
+        mockMvc.perform(post("/api/v1/meeting-rooms/verify")
+                        .header("X-USER", "test@test.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.statusCode").value(400))
+                .andExpect(jsonPath("$.uri").value("/api/v1/meeting-rooms/verify"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("입실이 예약시간보다 10분 이상 늦은 경우 - 입실 불가 400")
+    void enterMeetingRoomLateEntry() throws Exception {
+        String code = "ABC34F21";
+        LocalDateTime entryTime = LocalDateTime.now();
+        Long bookingNo = 1L;
+
+        EntryRequest entryRequest = new EntryRequest(
+                code,
+                entryTime,
+                bookingNo
+        );
+
+        Request request = Request.create(Request.HttpMethod.GET, "/api/v1/meeting-rooms/verify", Map.of(), null, Charset.defaultCharset(), null);
+        FeignException exception = FeignException.errorStatus("verify", Response.builder()
+                .status(400)
+                .reason("Bad Request")
+                .request(request)
+                .headers(Map.of("Content-Type", List.of("application/json")))
+                .body("{\"message\":\"예약시간 10분 후까지만 입실 가능합니다.\",\"statusCode\":400,\"uri\":\"/api/v1/meeting-rooms/verify\"}", StandardCharsets.UTF_8)
+                .build());
+
+        when(meetingRoomService.enterMeetingRoom(Mockito.anyString(), Mockito.any(LocalDateTime.class), Mockito.anyLong())).thenThrow(exception);
+
+        String json = objectMapper.writeValueAsString(entryRequest);
+
+        mockMvc.perform(post("/api/v1/meeting-rooms/verify")
+                        .header("X-USER", "test@test.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.statusCode").value(400))
                 .andExpect(jsonPath("$.uri").value("/api/v1/meeting-rooms/verify"))
                 .andDo(print());
     }

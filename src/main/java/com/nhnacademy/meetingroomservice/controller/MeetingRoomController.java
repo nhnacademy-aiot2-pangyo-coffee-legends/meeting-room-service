@@ -2,6 +2,7 @@ package com.nhnacademy.meetingroomservice.controller;
 
 import com.nhnacademy.meetingroomservice.dto.*;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,7 +56,7 @@ public class MeetingRoomController {
      *
      * @return 회의실 DTO 리스트 반환
      */
-    @GetMapping("/list")
+    @GetMapping
     public ResponseEntity<List<MeetingRoomResponse>> getMeetingRoomList() {
         List<MeetingRoomResponse> meetingRoomResponseList = meetingRoomService.getMeetingRoomList();
 
@@ -102,8 +103,9 @@ public class MeetingRoomController {
      * @return 회의실 입실 검증 성공 시 EntryResponse DTO 반환
      */
     @PostMapping("/verify")
-    public ResponseEntity<EntryResponse> enterMeetingRoom(@RequestHeader("X-USER") String email, @RequestBody EntryRequest entryRequest) {
-        EntryResponse entryResponse = meetingRoomService.enterMeetingRoom(email, entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getBookingNo());
+    public ResponseEntity<EntryResponse> enterMeetingRoom(@RequestBody EntryRequest entryRequest) {
+
+        EntryResponse entryResponse = meetingRoomService.enterMeetingRoom(entryRequest.getCode(), entryRequest.getEntryTime(), entryRequest.getBookingNo());
 
         return ResponseEntity
                 .ok(entryResponse);
