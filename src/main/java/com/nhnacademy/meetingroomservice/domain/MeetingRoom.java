@@ -15,6 +15,7 @@ public class MeetingRoom {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="meeting_room_no")
     @Comment("회의실ID")
     Long no;
 

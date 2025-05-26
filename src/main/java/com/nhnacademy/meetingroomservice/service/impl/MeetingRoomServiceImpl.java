@@ -5,19 +5,22 @@ import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
 import com.nhnacademy.meetingroomservice.dto.EntryRequest;
 import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
-import com.nhnacademy.meetingroomservice.exception.BookingNotFoundException;
+import com.nhnacademy.meetingroomservice.error.CommonErrorResponse;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
 import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * {@link MeetingRoomService} 인터페이스를 구현한 클래스입니다.
@@ -132,21 +135,30 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         meetingRoomRepository.delete(meetingRoom);
     }
 
+    /**
+     * 회의실 입실 요청을 예약 서비스(booking service)로 전달하고, 응답을 반환합니다.
+     *
+     * <p>예약 정보가 유효하지 않거나 시간이 맞지 않는 경우,
+     * {@link com.nhnacademy.meetingroomservice.advice.MeetingRoomControllerAdvice}에서
+     * {@link feign.FeignException} 을 처리하여 JSON 형태의 오류 응답을 반환합니다.
+     *
+     * <p>이 메서드에서는 예외를 직접 처리하지 않습니다.
+     *
+     * @param code 회의실 예약 시 발급된 코드
+     * @param entryTime 입실 시도 시간
+     * @param bookingNo 예약 번호
+     * @return 입실 응답 DTO
+     * @throws FeignException 예약 서비스 호출 실패 시 발생
+     */
     @Override
-    public EntryResponse enterMeetingRoom(String email, String code, LocalDateTime entryTime, Long bookingNo) {
+    public EntryResponse enterMeetingRoom(String code, LocalDateTime entryTime, Long bookingNo) {
         EntryRequest entryRequest = new EntryRequest(
                 code,
                 entryTime,
                 bookingNo
         );
 
-        System.out.println("entryRequest: " + entryRequest);
-
-        ResponseEntity<EntryResponse> entryResponseEntity = bookingAdaptor.checkBooking(email, entryRequest);
-
-        if (entryResponseEntity.getStatusCode().is4xxClientError()) {
-            throw new BookingNotFoundException();
-        }
+        ResponseEntity<EntryResponse> entryResponseEntity = bookingAdaptor.checkBooking(entryRequest);
 
         return entryResponseEntity.getBody();
     }
