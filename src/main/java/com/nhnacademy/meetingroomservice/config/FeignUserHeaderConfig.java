@@ -1,5 +1,6 @@
 package com.nhnacademy.meetingroomservice.config;
 
+import com.nhnacademy.traceloggermodule.config.FeignTraceInterceptor;
 import feign.RequestInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +10,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Configuration
 public class FeignUserHeaderConfig {
+
+    @Bean
+    public RequestInterceptor feignTraceInterceptor() {
+        return new FeignTraceInterceptor();
+    }
 
     @Bean
     public RequestInterceptor userHeaderInterceptor() {

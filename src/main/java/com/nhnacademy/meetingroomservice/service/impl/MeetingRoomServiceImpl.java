@@ -5,7 +5,6 @@ import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
 import com.nhnacademy.meetingroomservice.dto.EntryRequest;
 import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
-import com.nhnacademy.meetingroomservice.error.CommonErrorResponse;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
@@ -17,10 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * {@link MeetingRoomService} 인터페이스를 구현한 클래스입니다.
