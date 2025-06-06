@@ -6,6 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.Comment;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @NoArgsConstructor
 @Table(name = "meeting_rooms")
@@ -27,13 +30,23 @@ public class MeetingRoom {
     @Comment("수용인원")
     int meetingRoomCapacity;
 
+    @ManyToMany
+    @JoinTable(
+            name = "meeting_room_equipment",
+            joinColumns = @JoinColumn(name = "meeting_room_id"),
+            inverseJoinColumns = @JoinColumn(name = "equipment_id")
+    )
+    private List<Equipment> equipmentList = new ArrayList<>();
+
     private MeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
         this.meetingRoomName = meetingRoomName;
         this.meetingRoomCapacity = meetingRoomCapacity;
     }
 
-    public static MeetingRoom ofNewMeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
-        return new MeetingRoom(meetingRoomName, meetingRoomCapacity);
+    public static MeetingRoom ofNewMeetingRoom(String meetingRoomName, int meetingRoomCapacity, List<Equipment> equipments) {
+        MeetingRoom meetingRoom = new MeetingRoom(meetingRoomName, meetingRoomCapacity);
+        meetingRoom.equipmentList.addAll(equipments);
+        return meetingRoom;
     }
 
     public void update(String meetingRoomName, int meetingRoomCapacity) {

@@ -1,14 +1,16 @@
 package com.nhnacademy.meetingroomservice.service.impl;
 
 import com.nhnacademy.meetingroomservice.adaptor.BookingAdaptor;
+import com.nhnacademy.meetingroomservice.domain.Equipment;
+import com.nhnacademy.meetingroomservice.domain.EquipmentType;
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
 import com.nhnacademy.meetingroomservice.dto.EntryRequest;
 import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
-import com.nhnacademy.meetingroomservice.exception.BookingNotFoundException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
+import com.nhnacademy.meetingroomservice.repository.EquipmentRepository;
 import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
 import feign.FeignException;
 import jakarta.transaction.Transactional;
@@ -23,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +41,9 @@ class MeetingRoomServiceImplTest {
     MeetingRoomRepository meetingRoomRepository;
 
     @Mock
+    EquipmentRepository equipmentRepository;
+
+    @Mock
     BookingAdaptor bookingAdaptor;
 
     @InjectMocks // Mock 객체 생성 후 자동 주입 (bean injection)
@@ -50,13 +56,20 @@ class MeetingRoomServiceImplTest {
         String meetingRoomName = "회의실 test";
         int meetingRoomCapacity = 10;
 
+        List<Long> equipmentIds = new ArrayList<>();
+        equipmentIds.add(EquipmentType.DISPLAY.getId());
+        equipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+        equipmentIds.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getId());
+
         when(meetingRoomRepository.existsMeetingRoomByMeetingRoomName(meetingRoomName)).thenReturn(false);
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = new ArrayList<>();
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
         when(meetingRoomRepository.save(Mockito.any(MeetingRoom.class))).thenReturn(meetingRoom);
 
         // When
-        MeetingRoomResponse response = meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        MeetingRoomResponse response = meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity, equipmentIds);
 
         // Then
         assertNotNull(response);
@@ -72,11 +85,16 @@ class MeetingRoomServiceImplTest {
         String meetingRoomName = "회의실 test";
         int meetingRoomCapacity = 20;
 
+        List<Long> equipmentIds = new ArrayList<>();
+        equipmentIds.add(EquipmentType.DISPLAY.getId());
+        equipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+        equipmentIds.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getId());
+
         when(meetingRoomRepository.existsMeetingRoomByMeetingRoomName(meetingRoomName)).thenReturn(true);
 
         // When / Then
         assertThrows(MeetingRoomAlreadyExistsException.class, () -> {
-            meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity);
+            meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity, equipmentIds);
         });
     }
 
@@ -86,7 +104,9 @@ class MeetingRoomServiceImplTest {
         String meetingRoomName = "회의실 test";
         int meetingRoomCapacity = 10;
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = new ArrayList<>();
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
 
         ReflectionTestUtils.setField(meetingRoom, "no", 1L);
 
@@ -104,7 +124,9 @@ class MeetingRoomServiceImplTest {
         String meetingRoomName = "회의실 test";
         int meetingRoomCapacity = 10;
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = new ArrayList<>();
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
         ReflectionTestUtils.setField(meetingRoom, "no", 1L);
 
         when(meetingRoomRepository.findById(1L)).thenReturn(Optional.of(meetingRoom));
@@ -120,13 +142,15 @@ class MeetingRoomServiceImplTest {
         String meetingRoomName = "회의실 test1";
         int meetingRoomCapacity = 10;
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = new ArrayList<>();
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
         ReflectionTestUtils.setField(meetingRoom, "no", 1L);
 
         String meetingRoomName2 = "회의실 test2";
         int meetingRoomCapacity2 = 15;
 
-        MeetingRoom meetingRoom2 = MeetingRoom.ofNewMeetingRoom(meetingRoomName2, meetingRoomCapacity2);
+        MeetingRoom meetingRoom2 = MeetingRoom.ofNewMeetingRoom(meetingRoomName2, meetingRoomCapacity2, equipments);
         ReflectionTestUtils.setField(meetingRoom2, "no", 2L);
 
         List<MeetingRoom> meetingRoomList = List.of(meetingRoom, meetingRoom2);
@@ -168,7 +192,9 @@ class MeetingRoomServiceImplTest {
 
         when(meetingRoomRepository.existsById(1L)).thenReturn(true);
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = new ArrayList<>();
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
         ReflectionTestUtils.setField(meetingRoom, "no", 1L);
 
         when(meetingRoomRepository.findById(1L)).thenReturn(Optional.of(meetingRoom));
@@ -186,7 +212,9 @@ class MeetingRoomServiceImplTest {
         String meetingRoomName = "회의실 test";
         int meetingRoomCapacity = 10;
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = new ArrayList<>();
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
         ReflectionTestUtils.setField(meetingRoom, "no", 1L);
 
         when(meetingRoomRepository.existsById(2L)).thenReturn(false);
@@ -202,7 +230,9 @@ class MeetingRoomServiceImplTest {
         String meetingRoomName = "회의실 test";
         int meetingRoomCapacity = 10;
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = new ArrayList<>();
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
         ReflectionTestUtils.setField(meetingRoom, "no", 1L);
 
         when(meetingRoomRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(meetingRoom));

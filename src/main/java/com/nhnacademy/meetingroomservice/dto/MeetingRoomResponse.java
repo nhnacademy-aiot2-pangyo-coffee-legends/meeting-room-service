@@ -4,6 +4,8 @@ package com.nhnacademy.meetingroomservice.dto;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Getter
 public class MeetingRoomResponse {
@@ -14,4 +16,5 @@ public class MeetingRoomResponse {
 
     private final int meetingRoomCapacity;
 
+    private final List<String> equipmentNames;
 }

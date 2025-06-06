@@ -1,5 +1,6 @@
 package com.nhnacademy.meetingroomservice.service;
 
+import com.nhnacademy.meetingroomservice.domain.Equipment;
 import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
 
@@ -8,7 +9,7 @@ import java.util.List;
 
 public interface MeetingRoomService {
 
-    MeetingRoomResponse registerMeetingRoom(String meetingRoomName, int meetingRoomCapacity);
+    MeetingRoomResponse registerMeetingRoom(String meetingRoomName, int meetingRoomCapacity, List<Long> equipmentIds);
 
     MeetingRoomResponse getMeetingRoom(Long no);
 

@@ -1,6 +1,7 @@
 package com.nhnacademy.meetingroomservice.service.impl;
 
 import com.nhnacademy.meetingroomservice.adaptor.BookingAdaptor;
+import com.nhnacademy.meetingroomservice.domain.Equipment;
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
 import com.nhnacademy.meetingroomservice.dto.EntryRequest;
 import com.nhnacademy.meetingroomservice.dto.EntryResponse;
@@ -8,6 +9,7 @@ import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
+import com.nhnacademy.meetingroomservice.repository.EquipmentRepository;
 import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
 import feign.FeignException;
@@ -46,10 +48,10 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-
 public class MeetingRoomServiceImpl implements MeetingRoomService {
 
     private final MeetingRoomRepository meetingRoomRepository;
+    private final EquipmentRepository equipmentRepository;
     private final BookingAdaptor bookingAdaptor;
 
     /**
@@ -59,9 +61,11 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 생성된 회의실 Entity를 DTO로 변환하여 반환
      */
     @Override
-    public MeetingRoomResponse registerMeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
+    public MeetingRoomResponse registerMeetingRoom(String meetingRoomName, int meetingRoomCapacity, List<Long> equipmentIds) {
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = equipmentRepository.findAllById(equipmentIds);
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
 
         if (meetingRoomRepository.existsMeetingRoomByMeetingRoomName(meetingRoomName)) {
             throw new MeetingRoomAlreadyExistsException(meetingRoomName);
@@ -166,10 +170,15 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 회의실 정보가 담긴 DTO로 변환하여 반환
      */
     private MeetingRoomResponse convertToMeetingRoomResponse(MeetingRoom meetingRoom) {
+        List<String> equipmentNames = meetingRoom.getEquipmentList()
+                .stream()
+                .map(equipment -> equipment.getName()).toList();
+
         return new MeetingRoomResponse(
                 meetingRoom.getNo(),
                 meetingRoom.getMeetingRoomName(),
-                meetingRoom.getMeetingRoomCapacity()
+                meetingRoom.getMeetingRoomCapacity(),
+                equipmentNames
         );
     }
 }

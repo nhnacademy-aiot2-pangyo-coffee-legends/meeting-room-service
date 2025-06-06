@@ -7,5 +7,4 @@ public interface MeetingRoomRepository extends JpaRepository<MeetingRoom, Long> 
 
     boolean existsMeetingRoomByMeetingRoomName(String meetingRoomName);
 
-
 }

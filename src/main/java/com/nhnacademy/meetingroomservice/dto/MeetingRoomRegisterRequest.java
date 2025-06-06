@@ -1,8 +1,11 @@
 package com.nhnacademy.meetingroomservice.dto;
 
+import com.nhnacademy.meetingroomservice.domain.Equipment;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+
+import java.util.List;
 
 @Getter
 @ToString
@@ -12,5 +15,7 @@ public class MeetingRoomRegisterRequest {
     private String meetingRoomName;
 
     private int meetingRoomCapacity;
+
+    private List<Long> equipmentIds;
 
 }

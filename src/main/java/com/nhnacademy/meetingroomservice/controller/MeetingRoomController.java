@@ -30,7 +30,8 @@ public class MeetingRoomController {
 
         MeetingRoomResponse meetingRoomResponse = meetingRoomService.registerMeetingRoom(
                 meetingRoomRegisterRequest.getMeetingRoomName(),
-                meetingRoomRegisterRequest.getMeetingRoomCapacity()
+                meetingRoomRegisterRequest.getMeetingRoomCapacity(),
+                meetingRoomRegisterRequest.getEquipmentIds()
         );
 
         return ResponseEntity
