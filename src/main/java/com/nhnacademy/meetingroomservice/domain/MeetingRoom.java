@@ -36,7 +36,7 @@ public class MeetingRoom {
             joinColumns = @JoinColumn(name = "meeting_room_id"),
             inverseJoinColumns = @JoinColumn(name = "equipment_id")
     )
-    private List<Equipment> equipmentList = new ArrayList<>();
+    private List<Equipment> equipments = new ArrayList<>();
 
     private MeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
         this.meetingRoomName = meetingRoomName;
@@ -45,12 +45,13 @@ public class MeetingRoom {
 
     public static MeetingRoom ofNewMeetingRoom(String meetingRoomName, int meetingRoomCapacity, List<Equipment> equipments) {
         MeetingRoom meetingRoom = new MeetingRoom(meetingRoomName, meetingRoomCapacity);
-        meetingRoom.equipmentList.addAll(equipments);
+        meetingRoom.equipments.addAll(equipments);
         return meetingRoom;
     }
 
-    public void update(String meetingRoomName, int meetingRoomCapacity) {
+    public void update(String meetingRoomName, int meetingRoomCapacity, List<Equipment> equipments) {
         this.meetingRoomName = meetingRoomName;
         this.meetingRoomCapacity = meetingRoomCapacity;
+        this.equipments = equipments;
     }
 }

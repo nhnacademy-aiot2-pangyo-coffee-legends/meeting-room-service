@@ -115,11 +115,13 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 데이터베이스에 존재하는 회의실의 이름 / 수용인원을 변경하여 저장 및 DTO로 변환하여 반환
      */
     @Override
-    public MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity) {
+    public MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity, List<Long> equipmentIds) {
+
+        List<Equipment> equipments = equipmentRepository.findAllById(equipmentIds);
 
         MeetingRoom meetingRoom = meetingRoomRepository.findById(no).orElseThrow(() -> new MeetingRoomDoesNotExistException(no));
 
-        meetingRoom.update(meetingRoomName, meetingRoomCapacity);
+        meetingRoom.update(meetingRoomName, meetingRoomCapacity, equipments);
 
         return convertToMeetingRoomResponse(meetingRoom);
     }
@@ -170,7 +172,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 회의실 정보가 담긴 DTO로 변환하여 반환
      */
     private MeetingRoomResponse convertToMeetingRoomResponse(MeetingRoom meetingRoom) {
-        List<String> equipmentNames = meetingRoom.getEquipmentList()
+        List<String> equipmentNames = meetingRoom.getEquipments()
                 .stream()
                 .map(equipment -> equipment.getName()).toList();
 

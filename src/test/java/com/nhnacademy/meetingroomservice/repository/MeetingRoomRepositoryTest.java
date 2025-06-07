@@ -92,14 +92,16 @@ class MeetingRoomRepositoryTest {
         Equipment videoConfSystem = new Equipment(EquipmentType.VIDEO_CONFERENCE_SYSTEM, EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
 
         equipments.add(display);
-        equipments.add(digitalWhiteboard);
-        equipments.add(videoConfSystem);
 
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(
                 "회의실 C",
                 10,
                 equipments
         );
+
+        List<Equipment> additionalEquipments = new ArrayList<>();
+        additionalEquipments.add(digitalWhiteboard);
+        additionalEquipments.add(videoConfSystem);
 
         // When
         MeetingRoom savedMeetingRoom = meetingRoomRepository.save(meetingRoom);
@@ -114,7 +116,8 @@ class MeetingRoomRepositoryTest {
 
         dbMeetingRoom.update(
                 "회의실 D",
-                25
+                25,
+                additionalEquipments
         );
 
         entityManager.flush();

@@ -76,7 +76,8 @@ public class MeetingRoomController {
         MeetingRoomResponse meetingRoomResponse = meetingRoomService.updateMeetingRoom(
                 no,
                 meetingRoomUpdateRequest.getMeetingRoomName(),
-                meetingRoomUpdateRequest.getMeetingRoomCapacity()
+                meetingRoomUpdateRequest.getMeetingRoomCapacity(),
+                meetingRoomUpdateRequest.getMeetingRoomIds()
         );
 
         return ResponseEntity

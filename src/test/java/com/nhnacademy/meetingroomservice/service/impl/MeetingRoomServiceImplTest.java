@@ -199,7 +199,10 @@ class MeetingRoomServiceImplTest {
 
         when(meetingRoomRepository.findById(1L)).thenReturn(Optional.of(meetingRoom));
 
-        MeetingRoomResponse response = meetingRoomService.updateMeetingRoom(1L, "회의실 test2", 15);
+        List<Long> additionalEquipmentIds = new ArrayList<>();
+        additionalEquipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+
+        MeetingRoomResponse response = meetingRoomService.updateMeetingRoom(1L, "회의실 test2", 15, additionalEquipmentIds);
 
         assertEquals(1L, response.getNo());
         assertEquals("회의실 test2", response.getMeetingRoomName());
@@ -217,10 +220,13 @@ class MeetingRoomServiceImplTest {
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
         ReflectionTestUtils.setField(meetingRoom, "no", 1L);
 
+        List<Long> additionalEquipmentIds = new ArrayList<>();
+        additionalEquipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+
         when(meetingRoomRepository.existsById(2L)).thenReturn(false);
 
         assertThrows(MeetingRoomDoesNotExistException.class, () -> {
-            meetingRoomService.updateMeetingRoom(2L, meetingRoomName, meetingRoomCapacity);
+            meetingRoomService.updateMeetingRoom(2L, meetingRoomName, meetingRoomCapacity, additionalEquipmentIds);
         });
     }
 

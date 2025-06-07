@@ -15,7 +15,7 @@ public interface MeetingRoomService {
 
     List<MeetingRoomResponse> getMeetingRoomList();
 
-    MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity);
+    MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity, List<Long> equipmentIds);
 
     void deleteMeetingRoom(Long no);
 
