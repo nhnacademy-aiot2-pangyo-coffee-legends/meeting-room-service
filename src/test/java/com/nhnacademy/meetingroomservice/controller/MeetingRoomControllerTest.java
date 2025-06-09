@@ -2,10 +2,10 @@ package com.nhnacademy.meetingroomservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.meetingroomservice.adaptor.BookingAdaptor;
+import com.nhnacademy.meetingroomservice.domain.EquipmentType;
 import com.nhnacademy.meetingroomservice.dto.EntryRequest;
 import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
-import com.nhnacademy.meetingroomservice.exception.BookingNotFoundException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
@@ -27,6 +27,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -58,9 +59,19 @@ class MeetingRoomControllerTest {
         int meetingRoomCapacity = 10;
         Long id = 1L;
 
-        MeetingRoomResponse response = new MeetingRoomResponse(id, meetingRoomName, meetingRoomCapacity);
+        List<String> equipmentNames = new ArrayList<>();
+        equipmentNames.add(EquipmentType.DISPLAY.getName());
+        equipmentNames.add(EquipmentType.DIGITAL_WHITEBOARD.getName());
+        equipmentNames.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
 
-        when(meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity)).thenReturn(response);
+        MeetingRoomResponse response = new MeetingRoomResponse(id, meetingRoomName, meetingRoomCapacity, equipmentNames);
+
+        List<Long> equipmentIds = new ArrayList<>();
+        equipmentIds.add(EquipmentType.DISPLAY.getId());
+        equipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+        equipmentIds.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getId());
+
+        when(meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity, equipmentIds)).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/meeting-rooms")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +95,12 @@ class MeetingRoomControllerTest {
         String meetingRoomName = "회의실 test";
         int meetingRoomCapacity = 10;
 
-        when(meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity))
+        List<Long> equipmentIds = new ArrayList<>();
+        equipmentIds.add(EquipmentType.DISPLAY.getId());
+        equipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+        equipmentIds.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getId());
+
+        when(meetingRoomService.registerMeetingRoom(meetingRoomName, meetingRoomCapacity, equipmentIds))
                 .thenThrow(new MeetingRoomAlreadyExistsException(meetingRoomName));
 
         mockMvc.perform(post("/api/v1/meeting-rooms")
@@ -111,7 +127,12 @@ class MeetingRoomControllerTest {
         int meetingRoomCapacity = 10;
         Long id = 1L;
 
-        MeetingRoomResponse response = new MeetingRoomResponse(id, meetingRoomName, meetingRoomCapacity);
+        List<String> equipmentNames = new ArrayList<>();
+        equipmentNames.add(EquipmentType.DISPLAY.getName());
+        equipmentNames.add(EquipmentType.DIGITAL_WHITEBOARD.getName());
+        equipmentNames.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
+
+        MeetingRoomResponse response = new MeetingRoomResponse(id, meetingRoomName, meetingRoomCapacity, equipmentNames);
 
         when(meetingRoomService.getMeetingRoom(id)).thenReturn(response);
 
@@ -143,8 +164,13 @@ class MeetingRoomControllerTest {
     @DisplayName("회의실 목록 조회 성공")
     void getMeetingRoomList() throws Exception {
 
-        MeetingRoomResponse response = new MeetingRoomResponse(1L, "회의실 test1", 10);
-        MeetingRoomResponse response2 = new MeetingRoomResponse(2L, "회의실 test2", 15);
+        List<String> equipmentNames = new ArrayList<>();
+        equipmentNames.add(EquipmentType.DISPLAY.getName());
+        equipmentNames.add(EquipmentType.DIGITAL_WHITEBOARD.getName());
+        equipmentNames.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
+
+        MeetingRoomResponse response = new MeetingRoomResponse(1L, "회의실 test1", 10, equipmentNames);
+        MeetingRoomResponse response2 = new MeetingRoomResponse(2L, "회의실 test2", 15, equipmentNames);
 
         List<MeetingRoomResponse> meetingRoomResponseList = List.of(response, response2);
 
@@ -166,9 +192,20 @@ class MeetingRoomControllerTest {
     @DisplayName("회의실 정보 업데이트 성공")
     void updateMeetingRoom() throws Exception {
         Long id = 1L;
-        MeetingRoomResponse updated = new MeetingRoomResponse(id, "회의실 updated", 15);
 
-        when(meetingRoomService.updateMeetingRoom(id, "회의실 updated", 15)).thenReturn(updated);
+        List<String> equipmentNames = new ArrayList<>();
+        equipmentNames.add(EquipmentType.DISPLAY.getName());
+        equipmentNames.add(EquipmentType.DIGITAL_WHITEBOARD.getName());
+        equipmentNames.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
+
+        MeetingRoomResponse updated = new MeetingRoomResponse(id, "회의실 updated", 15, equipmentNames);
+
+        List<Long> equipmentIds = new ArrayList<>();
+        equipmentIds.add(EquipmentType.DISPLAY.getId());
+        equipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+        equipmentIds.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getId());
+
+        when(meetingRoomService.updateMeetingRoom(id, "회의실 updated", 15, equipmentIds)).thenReturn(updated);
 
         mockMvc.perform(put("/api/v1/meeting-rooms/{meeting-room-id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -193,7 +230,12 @@ class MeetingRoomControllerTest {
         int meetingRoomCapacity = 15;
         Long nonExistentId = 1L;
 
-        when(meetingRoomService.updateMeetingRoom(nonExistentId, meetingRoomName, meetingRoomCapacity))
+        List<Long> equipmentIds = new ArrayList<>();
+        equipmentIds.add(EquipmentType.DISPLAY.getId());
+        equipmentIds.add(EquipmentType.DIGITAL_WHITEBOARD.getId());
+        equipmentIds.add(EquipmentType.VIDEO_CONFERENCE_SYSTEM.getId());
+
+        when(meetingRoomService.updateMeetingRoom(nonExistentId, meetingRoomName, meetingRoomCapacity, equipmentIds))
                 .thenThrow(new MeetingRoomDoesNotExistException(nonExistentId));
 
         mockMvc.perform(put("/api/v1/meeting-rooms/{meeting-room-id}", nonExistentId)

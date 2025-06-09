@@ -2,7 +2,7 @@ name: Meeting-Room CI/CD
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "dev" , "main"]
 
 jobs:
   build:
