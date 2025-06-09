@@ -12,6 +12,7 @@ public class MeetingRoomEquipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "meeting_room_equipment_no")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
