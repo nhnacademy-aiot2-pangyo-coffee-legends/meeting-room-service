@@ -5,6 +5,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "equipments")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -13,7 +16,7 @@ public class Equipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "no", nullable = false)
+    @Column(name = "equipment_no", nullable = false)
     private Long no;
 
 
@@ -21,6 +24,7 @@ public class Equipment {
     @Column(name = "equipment_type", nullable = false, length = 50)
     private EquipmentType equipmentType;
 
+    @Column(name = "equipment_name", nullable = false, length = 50)
     private String name;
 
     public Equipment(EquipmentType equipmentType, String name) {

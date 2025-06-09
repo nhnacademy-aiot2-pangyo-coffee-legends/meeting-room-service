@@ -3,6 +3,7 @@ package com.nhnacademy.meetingroomservice.service.impl;
 import com.nhnacademy.meetingroomservice.adaptor.BookingAdaptor;
 import com.nhnacademy.meetingroomservice.domain.Equipment;
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
+import com.nhnacademy.meetingroomservice.domain.MeetingRoomEquipment;
 import com.nhnacademy.meetingroomservice.dto.EntryRequest;
 import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
@@ -172,9 +173,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 회의실 정보가 담긴 DTO로 변환하여 반환
      */
     private MeetingRoomResponse convertToMeetingRoomResponse(MeetingRoom meetingRoom) {
-        List<String> equipmentNames = meetingRoom.getEquipments()
+        List<String> equipmentNames = meetingRoom.getMeetingRoomEquipments()
                 .stream()
-                .map(equipment -> equipment.getName()).toList();
+                .map(meetingRoomEquipment -> meetingRoomEquipment.getEquipment().getName())
+                .toList();
 
         return new MeetingRoomResponse(
                 meetingRoom.getNo(),

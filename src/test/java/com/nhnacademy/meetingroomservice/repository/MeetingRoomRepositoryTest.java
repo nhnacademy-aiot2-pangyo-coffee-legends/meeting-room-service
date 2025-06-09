@@ -24,6 +24,9 @@ class MeetingRoomRepositoryTest {
     MeetingRoomRepository meetingRoomRepository;
 
     @Autowired
+    EquipmentRepository equipmentRepository;
+
+    @Autowired
     TestEntityManager entityManager;
 
     @Test
@@ -88,10 +91,10 @@ class MeetingRoomRepositoryTest {
         // Given
         List<Equipment> equipments = new ArrayList<>();
         Equipment display = new Equipment(EquipmentType.DISPLAY, EquipmentType.DISPLAY.getName());
-        Equipment digitalWhiteboard = new Equipment(EquipmentType.DIGITAL_WHITEBOARD, EquipmentType.DIGITAL_WHITEBOARD.getName());
-        Equipment videoConfSystem = new Equipment(EquipmentType.VIDEO_CONFERENCE_SYSTEM, EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
 
         equipments.add(display);
+
+        equipmentRepository.saveAll(equipments);
 
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(
                 "회의실 C",
@@ -100,8 +103,14 @@ class MeetingRoomRepositoryTest {
         );
 
         List<Equipment> additionalEquipments = new ArrayList<>();
+
+        Equipment digitalWhiteboard = new Equipment(EquipmentType.DIGITAL_WHITEBOARD, EquipmentType.DIGITAL_WHITEBOARD.getName());
+        Equipment videoConfSystem = new Equipment(EquipmentType.VIDEO_CONFERENCE_SYSTEM, EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
+
         additionalEquipments.add(digitalWhiteboard);
         additionalEquipments.add(videoConfSystem);
+
+        equipmentRepository.saveAll(additionalEquipments);
 
         // When
         MeetingRoom savedMeetingRoom = meetingRoomRepository.save(meetingRoom);

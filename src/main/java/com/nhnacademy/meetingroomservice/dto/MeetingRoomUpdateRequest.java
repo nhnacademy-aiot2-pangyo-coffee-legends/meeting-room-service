@@ -14,5 +14,5 @@ public class MeetingRoomUpdateRequest {
 
     private int meetingRoomCapacity;
 
-    private List<Long> meetingRoomIds;
+    private List<Long> equipmentIds;
 }

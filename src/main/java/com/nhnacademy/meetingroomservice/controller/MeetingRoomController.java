@@ -25,7 +25,7 @@ public class MeetingRoomController {
      * @param meetingRoomRegisterRequest 회의실 등록 요청 DTO
      * @return 신규 등록된 회의실의 이름과 수용인원을 담은 DTO 객체 반환
      */
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<MeetingRoomResponse> registerMeetingRoom(@RequestBody MeetingRoomRegisterRequest meetingRoomRegisterRequest) {
 
         MeetingRoomResponse meetingRoomResponse = meetingRoomService.registerMeetingRoom(
@@ -77,7 +77,7 @@ public class MeetingRoomController {
                 no,
                 meetingRoomUpdateRequest.getMeetingRoomName(),
                 meetingRoomUpdateRequest.getMeetingRoomCapacity(),
-                meetingRoomUpdateRequest.getMeetingRoomIds()
+                meetingRoomUpdateRequest.getEquipmentIds()
         );
 
         return ResponseEntity

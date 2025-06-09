@@ -1,6 +1,5 @@
 package com.nhnacademy.meetingroomservice.dto;
 
-import com.nhnacademy.meetingroomservice.domain.Equipment;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
