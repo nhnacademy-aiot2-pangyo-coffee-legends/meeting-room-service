@@ -15,6 +15,7 @@ import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +56,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final EquipmentRepository equipmentRepository;
     private final BookingAdaptor bookingAdaptor;
 
+    private final RedisTemplate<String, String> redisTemplate;
     /**
      *
      * @param meetingRoomName 회의실 이름
@@ -73,6 +75,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         }
 
         MeetingRoom savedMeetingRoom = meetingRoomRepository.save(meetingRoom);
+        setRedisTemplate(meetingRoom);
 
         return convertToMeetingRoomResponse(savedMeetingRoom);
     }
@@ -123,6 +126,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         MeetingRoom meetingRoom = meetingRoomRepository.findById(no).orElseThrow(() -> new MeetingRoomDoesNotExistException(no));
 
         meetingRoom.update(meetingRoomName, meetingRoomCapacity, equipments);
+        setRedisTemplate(meetingRoom);
 
         return convertToMeetingRoomResponse(meetingRoom);
     }
@@ -184,5 +188,11 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 meetingRoom.getMeetingRoomCapacity(),
                 equipmentNames
         );
+    }
+
+    private void setRedisTemplate(MeetingRoom meetingRoom) {
+        String key = "room:"+meetingRoom.getNo();
+        redisTemplate.opsForHash().put(key, "name", meetingRoom.getMeetingRoomName());
+        redisTemplate.opsForHash().put(key, "capacity", String.valueOf(meetingRoom.getMeetingRoomCapacity()));
     }
 }
