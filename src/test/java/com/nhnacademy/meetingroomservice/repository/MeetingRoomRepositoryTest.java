@@ -1,5 +1,7 @@
 package com.nhnacademy.meetingroomservice.repository;
 
+import com.nhnacademy.meetingroomservice.domain.Equipment;
+import com.nhnacademy.meetingroomservice.domain.EquipmentType;
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -8,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,15 +24,23 @@ class MeetingRoomRepositoryTest {
     MeetingRoomRepository meetingRoomRepository;
 
     @Autowired
+    EquipmentRepository equipmentRepository;
+
+    @Autowired
     TestEntityManager entityManager;
 
     @Test
     @DisplayName("회의실 등록 test")
     void testRegisterMeetingRoom() {
         // Given
+        List<Equipment> equipments = new ArrayList<>();
+        Equipment display = new Equipment(EquipmentType.DISPLAY, EquipmentType.DISPLAY.getName());
+        equipments.add(display);
+
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(
-                "회의실 1",
-                20
+                "회의실 A",
+                20,
+                equipments
         );
 
         // When
@@ -37,7 +49,7 @@ class MeetingRoomRepositoryTest {
         // Then
         assertNotNull(savedMeetingRoom);
         assertAll(
-                () -> assertEquals("회의실 1", savedMeetingRoom.getMeetingRoomName()),
+                () -> assertEquals("회의실 A", savedMeetingRoom.getMeetingRoomName()),
                 () -> assertEquals(20, savedMeetingRoom.getMeetingRoomCapacity())
         );
     }
@@ -47,9 +59,16 @@ class MeetingRoomRepositoryTest {
     void testGetMeetingRoom() {
 
         // Given
+        List<Equipment> equipments = new ArrayList<>();
+        Equipment display = new Equipment(EquipmentType.DISPLAY, EquipmentType.DISPLAY.getName());
+        Equipment digitalWhiteboard = new Equipment(EquipmentType.DIGITAL_WHITEBOARD, EquipmentType.DIGITAL_WHITEBOARD.getName());
+        equipments.add(display);
+        equipments.add(digitalWhiteboard);
+
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(
                 "회의실 B",
-                25
+                25,
+                equipments
         );
 
         // When
@@ -70,10 +89,28 @@ class MeetingRoomRepositoryTest {
     void testUpdateMeetingRoom() {
 
         // Given
+        List<Equipment> equipments = new ArrayList<>();
+        Equipment display = new Equipment(EquipmentType.DISPLAY, EquipmentType.DISPLAY.getName());
+
+        equipments.add(display);
+
+        equipmentRepository.saveAll(equipments);
+
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(
                 "회의실 C",
-                10
+                10,
+                equipments
         );
+
+        List<Equipment> additionalEquipments = new ArrayList<>();
+
+        Equipment digitalWhiteboard = new Equipment(EquipmentType.DIGITAL_WHITEBOARD, EquipmentType.DIGITAL_WHITEBOARD.getName());
+        Equipment videoConfSystem = new Equipment(EquipmentType.VIDEO_CONFERENCE_SYSTEM, EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
+
+        additionalEquipments.add(digitalWhiteboard);
+        additionalEquipments.add(videoConfSystem);
+
+        equipmentRepository.saveAll(additionalEquipments);
 
         // When
         MeetingRoom savedMeetingRoom = meetingRoomRepository.save(meetingRoom);
@@ -88,7 +125,8 @@ class MeetingRoomRepositoryTest {
 
         dbMeetingRoom.update(
                 "회의실 D",
-                25
+                25,
+                additionalEquipments
         );
 
         entityManager.flush();
@@ -108,10 +146,20 @@ class MeetingRoomRepositoryTest {
     void testDeleteMeetingRoom() {
 
         // Given
+        List<Equipment> equipments = new ArrayList<>();
+        Equipment display = new Equipment(EquipmentType.DISPLAY, EquipmentType.DISPLAY.getName());
+        Equipment digitalWhiteboard = new Equipment(EquipmentType.DIGITAL_WHITEBOARD, EquipmentType.DIGITAL_WHITEBOARD.getName());
+        Equipment videoConfSystem = new Equipment(EquipmentType.VIDEO_CONFERENCE_SYSTEM, EquipmentType.VIDEO_CONFERENCE_SYSTEM.getName());
+
+        equipments.add(display);
+        equipments.add(digitalWhiteboard);
+        equipments.add(videoConfSystem);
+
         log.info("Meeting room created.");
         MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(
                 "회의실 E",
-                15
+                15,
+                equipments
         );
 
         // When

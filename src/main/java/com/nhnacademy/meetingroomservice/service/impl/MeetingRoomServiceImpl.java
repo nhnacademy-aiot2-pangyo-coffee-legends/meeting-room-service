@@ -1,16 +1,25 @@
 package com.nhnacademy.meetingroomservice.service.impl;
 
+import com.nhnacademy.meetingroomservice.adaptor.BookingAdaptor;
+import com.nhnacademy.meetingroomservice.domain.Equipment;
 import com.nhnacademy.meetingroomservice.domain.MeetingRoom;
+import com.nhnacademy.meetingroomservice.domain.MeetingRoomEquipment;
+import com.nhnacademy.meetingroomservice.dto.EntryRequest;
+import com.nhnacademy.meetingroomservice.dto.EntryResponse;
 import com.nhnacademy.meetingroomservice.dto.MeetingRoomResponse;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomAlreadyExistsException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomDoesNotExistException;
 import com.nhnacademy.meetingroomservice.exception.MeetingRoomNotFoundException;
+import com.nhnacademy.meetingroomservice.repository.EquipmentRepository;
 import com.nhnacademy.meetingroomservice.repository.MeetingRoomRepository;
 import com.nhnacademy.meetingroomservice.service.MeetingRoomService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -43,6 +52,8 @@ import java.util.List;
 public class MeetingRoomServiceImpl implements MeetingRoomService {
 
     private final MeetingRoomRepository meetingRoomRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final BookingAdaptor bookingAdaptor;
 
     /**
      *
@@ -51,9 +62,11 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 생성된 회의실 Entity를 DTO로 변환하여 반환
      */
     @Override
-    public MeetingRoomResponse registerMeetingRoom(String meetingRoomName, int meetingRoomCapacity) {
+    public MeetingRoomResponse registerMeetingRoom(String meetingRoomName, int meetingRoomCapacity, List<Long> equipmentIds) {
 
-        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity);
+        List<Equipment> equipments = equipmentRepository.findAllById(equipmentIds);
+
+        MeetingRoom meetingRoom = MeetingRoom.ofNewMeetingRoom(meetingRoomName, meetingRoomCapacity, equipments);
 
         if (meetingRoomRepository.existsMeetingRoomByMeetingRoomName(meetingRoomName)) {
             throw new MeetingRoomAlreadyExistsException(meetingRoomName);
@@ -103,11 +116,13 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
      * @return 데이터베이스에 존재하는 회의실의 이름 / 수용인원을 변경하여 저장 및 DTO로 변환하여 반환
      */
     @Override
-    public MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity) {
+    public MeetingRoomResponse updateMeetingRoom(Long no, String meetingRoomName, int meetingRoomCapacity, List<Long> equipmentIds) {
+
+        List<Equipment> equipments = equipmentRepository.findAllById(equipmentIds);
 
         MeetingRoom meetingRoom = meetingRoomRepository.findById(no).orElseThrow(() -> new MeetingRoomDoesNotExistException(no));
 
-        meetingRoom.update(meetingRoomName, meetingRoomCapacity);
+        meetingRoom.update(meetingRoomName, meetingRoomCapacity, equipments);
 
         return convertToMeetingRoomResponse(meetingRoom);
     }
@@ -125,15 +140,49 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     }
 
     /**
+     * 회의실 입실 요청을 예약 서비스(booking service)로 전달하고, 응답을 반환합니다.
+     *
+     * <p>예약 정보가 유효하지 않거나 시간이 맞지 않는 경우,
+     * {@link com.nhnacademy.meetingroomservice.advice.MeetingRoomControllerAdvice}에서
+     * {@link feign.FeignException} 을 처리하여 JSON 형태의 오류 응답을 반환합니다.
+     *
+     * <p>이 메서드에서는 예외를 직접 처리하지 않습니다.
+     *
+     * @param code 회의실 예약 시 발급된 코드
+     * @param entryTime 입실 시도 시간
+     * @param bookingNo 예약 번호
+     * @return 입실 응답 DTO
+     * @throws FeignException 예약 서비스 호출 실패 시 발생
+     */
+    @Override
+    public EntryResponse enterMeetingRoom(String code, LocalDateTime entryTime, Long bookingNo) {
+        EntryRequest entryRequest = new EntryRequest(
+                code,
+                entryTime,
+                bookingNo
+        );
+
+        ResponseEntity<EntryResponse> entryResponseEntity = bookingAdaptor.checkBooking(entryRequest);
+
+        return entryResponseEntity.getBody();
+    }
+
+    /**
      *
      * @param meetingRoom 회의실 Entity 객체
      * @return 회의실 정보가 담긴 DTO로 변환하여 반환
      */
     private MeetingRoomResponse convertToMeetingRoomResponse(MeetingRoom meetingRoom) {
+        List<String> equipmentNames = meetingRoom.getMeetingRoomEquipments()
+                .stream()
+                .map(meetingRoomEquipment -> meetingRoomEquipment.getEquipment().getName())
+                .toList();
+
         return new MeetingRoomResponse(
                 meetingRoom.getNo(),
                 meetingRoom.getMeetingRoomName(),
-                meetingRoom.getMeetingRoomCapacity()
+                meetingRoom.getMeetingRoomCapacity(),
+                equipmentNames
         );
     }
 }
